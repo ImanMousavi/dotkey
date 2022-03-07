@@ -3,12 +3,14 @@ package run
 import (
 	"bufio"
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"strings"
 
+	"github.com/ChainSafe/gossamer/lib/crypto/sr25519"
 	"github.com/mr-tron/base58"
 	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ed25519"
+	"golang.org/x/crypto/blake2b"
 )
 
 func Validate(cmd *cobra.Command, args []string) error {
@@ -37,23 +39,64 @@ func Validate(cmd *cobra.Command, args []string) error {
 
 	switch len(b) {
 	case 32:
-		if prompt {
-			if _, err := fmt.Fprintln(cmd.OutOrStdout(), "public key is valid"); err != nil {
-				return fmt.Errorf("failed to write to output: %w", err)
-			}
-		}
-	case 64:
-		prvKey := ed25519.NewKeyFromSeed(b[:32])
-		if !bytes.Equal(prvKey[32:], b[32:]) {
-			return fmt.Errorf("invalid private key, derived publc key mismatch")
+		prv := &sr25519.PrivateKey{}
+		if err := prv.Decode(b); err != nil {
+			return fmt.Errorf("failed to decode private key")
 		}
 		if prompt {
 			if _, err := fmt.Fprintln(cmd.OutOrStdout(), "private key is valid"); err != nil {
 				return fmt.Errorf("failed to write to output: %w", err)
 			}
 		}
+	case 35:
+		if err := populateRegistry(); err != nil {
+			return fmt.Errorf("failed to populate registry: %w", err)
+		}
+
+		network := ""
+		n := hex.EncodeToString(b[:1])
+		for k, v := range networks {
+			if n == v {
+				network = k
+				break
+			}
+		}
+
+		if len(network) == 0 {
+			return fmt.Errorf("invalid public key, network not detected: %s", n)
+		}
+
+		encode := make([]byte, 33)
+		copy(encode, b[:33])
+
+		hash, err := blake2b.New(64, nil)
+		if err != nil {
+			return fmt.Errorf("failed to generate blake2b hash func: %w", err)
+		}
+		if _, err := hash.Write(append(ss58Prefix, encode...)); err != nil {
+			return fmt.Errorf("failed to hash data: %w", err)
+		}
+		checksum := hash.Sum(nil)
+		encode = append(encode, checksum[:2]...)
+
+		if !bytes.Equal(encode, b) {
+			return fmt.Errorf("invalid public key, checksum mismatch")
+		}
+
+		pubKey := &sr25519.PublicKey{}
+		if err := pubKey.Decode(b); err != nil {
+			return fmt.Errorf("failed to decode public key: %w", err)
+		}
+
+		if prompt {
+			if _, err := fmt.Fprintln(cmd.OutOrStdout(),
+				fmt.Sprintf("public key for network %s is valid", network),
+			); err != nil {
+				return fmt.Errorf("failed to write to output: %w", err)
+			}
+		}
 	default:
-		return fmt.Errorf("invalid key length")
+		return fmt.Errorf("invalid key length of %d bytes, expected 32 or 35", len(b))
 	}
 
 	return nil

@@ -2,10 +2,10 @@ package run
 
 import (
 	"bufio"
-	"crypto/ed25519"
 	"fmt"
 	"strings"
 
+	"github.com/ChainSafe/gossamer/lib/crypto/sr25519"
 	"github.com/kubetrail/dotkey/pkg/flags"
 	"github.com/mr-tron/base58"
 	"github.com/spf13/cobra"
@@ -78,6 +78,10 @@ func Verify(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to decode key as base58 string: %w", err)
 	}
 
+	if len(b) != 35 {
+		return fmt.Errorf("invalid public key byte length, expected 35, got %d", len(b))
+	}
+
 	hashBytes, err := base58.Decode(hash)
 	if err != nil {
 		return fmt.Errorf("failed to decode hash: %w", err)
@@ -88,8 +92,13 @@ func Verify(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to decode signature: %w", err)
 	}
 
-	if !ed25519.Verify(b, hashBytes, signBytes) {
-		return fmt.Errorf("failed to validate signature")
+	pubKey := &sr25519.PublicKey{}
+	if err := pubKey.Decode(b[1:33]); err != nil {
+		return fmt.Errorf("failed to decode public key: %w", err)
+	}
+
+	if ok, err := pubKey.Verify(hashBytes, signBytes); err != nil || !ok {
+		return fmt.Errorf("failed to verify signature: %w", err)
 	}
 
 	if printOk {

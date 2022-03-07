@@ -22,6 +22,8 @@ import (
 	"golang.org/x/term"
 )
 
+var ss58Prefix = []byte("SS58PRE")
+
 func Gen(cmd *cobra.Command, args []string) error {
 	_ = viper.BindPFlag(flags.UsePassphrase, cmd.Flags().Lookup(flags.UsePassphrase))
 	_ = viper.BindPFlag(flags.SkipMnemonicValidation, cmd.Flags().Lookup(flags.SkipMnemonicValidation))
@@ -153,7 +155,6 @@ func Gen(cmd *cobra.Command, args []string) error {
 	}
 
 	// encode network and checksum
-	ss58Prefix := []byte("SS58PRE")
 	encode := pair.Public().Encode()
 
 	network, ok := networks[strings.ToLower(network)]
@@ -181,7 +182,7 @@ func Gen(cmd *cobra.Command, args []string) error {
 	encode = append(encode, checksum[:2]...)
 
 	outPub := base58.Encode(encode)
-	outPrv := pair.Private().Hex()
+	outPrv := base58.Encode(pair.Private().Encode())
 
 	if prompt {
 		if _, err := fmt.Fprintln(cmd.OutOrStdout(), "pub:", outPub); err != nil {

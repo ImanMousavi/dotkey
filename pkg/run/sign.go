@@ -2,19 +2,18 @@ package run
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 
+	"github.com/ChainSafe/gossamer/lib/crypto/sr25519"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/kubetrail/dotkey/pkg/flags"
 	"github.com/mr-tron/base58"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"golang.org/x/crypto/ed25519"
 )
 
 func Sign(cmd *cobra.Command, args []string) error {
@@ -44,12 +43,11 @@ func Sign(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to decode key as base58 string: %w", err)
 	}
 
-	var prvKey ed25519.PrivateKey
+	prvKey := &sr25519.PrivateKey{}
 	switch len(b) {
-	case 64:
-		prvKey = ed25519.NewKeyFromSeed(b[:32])
-		if !bytes.Equal(prvKey[32:], b[32:]) {
-			return fmt.Errorf("invalid private key, derived publc key mismatch")
+	case 32:
+		if err := prvKey.Decode(b); err != nil {
+			return fmt.Errorf("failed to decode private key")
 		}
 	default:
 		return fmt.Errorf("invalid key length, expected 64, got %d", len(b))
@@ -73,7 +71,10 @@ func Sign(cmd *cobra.Command, args []string) error {
 	}
 
 	hash := crypto.Keccak256(b)
-	sign := ed25519.Sign(prvKey, hash)
+	sign, err := prvKey.Sign(hash)
+	if err != nil {
+		return fmt.Errorf("failed to sign data: %w", err)
+	}
 
 	hashB58 := base58.Encode(hash)
 	signB58 := base58.Encode(sign)

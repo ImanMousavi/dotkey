@@ -39,21 +39,8 @@ m/0'/0   |   First child of first hardened child of master key
 m/0/0'   |   First hardened child of first child of master key
 m/0'/0'  |   First hardened child of first hardened child of master key'
 
-Network values can be one of:
-  polkadot BareSr25519 kusama BareEd25519 katalchain astar bifrost 
-  edgeware karura reynolds acala laminar polymesh integritee totem 
-  synesthesia kulupu dark darwinia geek stafi dock-testnet dock-mainnet 
-  shift zero zero-alphaville jupiter kabocha subsocial cord phala 
-  litentry robonomics datahighway ares vln centrifuge nodle kilt 
-  mathchain mathchain-testnet poli substrate BareSecp256k1 chainx 
-  uniarts reserved46 reserved47 neatcoin picasso composable oak KICO 
-  DICO xxnetwork hydradx aventus crust genshiro equilibrium sora 
-  zeitgeist manta calamari polkadex polkasmith polkafoundry 
-  origintrail-parachain pontem-network heiko integritee-incognito 
-  clover litmus altair parallel social-network quartz_mainnet 
-  pioneer_network sora_kusama_para efinity moonbeam moonriver ajuna 
-  kapex interlay kintsugi subspace_testnet subspace basilisk cess-testnet 
-  cess contextfree
+Network values are available via command:
+  dotkey network-list
 
 `,
 	RunE: run.Gen,
@@ -63,10 +50,10 @@ func init() {
 	rootCmd.AddCommand(genCmd)
 	f := genCmd.Flags()
 
-	f.String(flags.DerivationPath, "m/44'/501'/0'/0'", "Chain derivation path (hardened only)")
+	//f.String(flags.DerivationPath, "m/44'/354'/0'/0'", "Chain derivation path (hardened only)")
 	f.Bool(flags.UsePassphrase, false, "Prompt for secret passphrase")
 	f.Bool(flags.InputHexSeed, false, "Treat input as hex seed instead of mnemonic")
 	f.Bool(flags.SkipMnemonicValidation, false, "Skip mnemonic validation")
 	f.String(flags.Network, "substrate", "Network name")
-	f.String(flags.Scheme, "sr25519", "Cryptographic scheme: ed25519, sr25519, ecdsa")
+	f.String(flags.Scheme, "sr25519", "Cryptographic scheme: ed25519, sr25519")
 }
