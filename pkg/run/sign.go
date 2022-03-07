@@ -8,8 +8,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/ChainSafe/gossamer/lib/crypto"
+	"github.com/ChainSafe/gossamer/lib/crypto/ed25519"
 	"github.com/ChainSafe/gossamer/lib/crypto/sr25519"
-	"github.com/ethereum/go-ethereum/crypto"
+	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/kubetrail/dotkey/pkg/flags"
 	"github.com/mr-tron/base58"
 	"github.com/spf13/cobra"
@@ -43,12 +45,20 @@ func Sign(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to decode key as base58 string: %w", err)
 	}
 
-	prvKey := &sr25519.PrivateKey{}
+	var prvKey crypto.PrivateKey
 	switch len(b) {
 	case 32:
-		if err := prvKey.Decode(b); err != nil {
+		key := &sr25519.PrivateKey{}
+		if err := key.Decode(b); err != nil {
 			return fmt.Errorf("failed to decode private key")
 		}
+		prvKey = key
+	case 64:
+		key := &ed25519.PrivateKey{}
+		if err := key.Decode(b); err != nil {
+			return fmt.Errorf("failed to decode private key")
+		}
+		prvKey = key
 	default:
 		return fmt.Errorf("invalid key length, expected 64, got %d", len(b))
 	}
@@ -70,7 +80,7 @@ func Sign(cmd *cobra.Command, args []string) error {
 		b = []byte(strings.Join(args, " "))
 	}
 
-	hash := crypto.Keccak256(b)
+	hash := ethcrypto.Keccak256(b)
 	sign, err := prvKey.Sign(hash)
 	if err != nil {
 		return fmt.Errorf("failed to sign data: %w", err)

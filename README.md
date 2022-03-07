@@ -1,5 +1,7 @@
 # dotkey
-Generate Solana keys using mnemonics
+`dotkey` is a command line interface (CLI) wallet to generate
+`polkadot` (and other associated networks such as `Kusama`) keys
+using mnemonics. Also sign and verify data using these keys.
 
 ## disclaimer
 > The use of this tool does not guarantee security or usability for any
@@ -19,7 +21,7 @@ source <(dotkey completion bash)
 ```
 
 ## generate keys
-Solana keys can be generated using mnemonic. [bip39](https://github.com/kubetrail/bip39)
+Polkadot keys can be generated using mnemonic. [bip39](https://github.com/kubetrail/bip39)
 can be used for generating new mnemonics:
 ```bash
 bip39 gen
@@ -94,47 +96,80 @@ Key validation checks for key string format, length and other characteristics.
 For instance, if a private key is entered, it also checks if a public key
 can be derived from it.
 
+Generate keys for both `sr25519` and `ed25519` schemes
 ```bash
-dotkey gen
+dotkey gen --scheme=sr25519
 Enter mnemonic: patient board palm abandon right sort find blood grace sweet vote load action bag trash calm burden glow phrase shoot frog vacant elegant tourist
-pub: AYFf2pT5o1FqzwQmPM6pfW7sPdK4oVxwD7cHrt3X4jY8
-prv: 2WKuYzXcJk53A1ymJ2mH182TuqBfSnMShyoA4ma1b9cUxXi5fo1bm3Va4eTxRuafmpYwH2kNM1ioHdG8fYy1zSH2
+pub: 5Dkq59KEs7FZB6rJs4ANd6q3gBitt2o3zYEBGtdnApWWFyUq
+prv: 8bJUC1kRPrMdsjYhnZbd5sSDfxhYgYDJFpUnNwKNndQr
+
+dotkey gen --scheme=ed25519
+Enter mnemonic: patient board palm abandon right sort find blood grace sweet vote load action bag trash calm burden glow phrase shoot frog vacant elegant tourist
+pub: 5DTatDjH59QYHLBgzvXFxkvbV1JskwmzXydiC8hQd2qmAiei
+prv: WePVryNYi198dbiRSpLmMN2NALW23V7Mm2XMXWjcVZCn5qz9f4RJfSJFxmWyybM7ZQDJL1xTsNodZVMBETSNCy9
 ```
 
 These keys can be validated:
 ```bash
 dotkey validate 
-Enter prv or pub key: AYFf2pT5o1FqzwQmPM6pfW7sPdK4oVxwD7cHrt3X4jY8
-public key is valid
-```
+Enter prv or pub key: 5Dkq59KEs7FZB6rJs4ANd6q3gBitt2o3zYEBGtdnApWWFyUq
+sr25519 public key for network substrate is valid
 
-```bash
 dotkey validate 
-Enter prv or pub key: 2WKuYzXcJk53A1ymJ2mH182TuqBfSnMShyoA4ma1b9cUxXi5fo1bm3Va4eTxRuafmpYwH2kNM1ioHdG8fYy1zSH2
-private key is valid
+Enter prv or pub key: 8bJUC1kRPrMdsjYhnZbd5sSDfxhYgYDJFpUnNwKNndQr
+sr25519 private key is valid
+
+dotkey validate 
+Enter prv or pub key: 5DTatDjH59QYHLBgzvXFxkvbV1JskwmzXydiC8hQd2qmAiei
+ed25519 public key for network substrate is valid
+
+dotkey validate 
+Enter prv or pub key: WePVryNYi198dbiRSpLmMN2NALW23V7Mm2XMXWjcVZCn5qz9f4RJfSJFxmWyybM7ZQDJL1xTsNodZVMBETSNCy9
+ed25519 private key is valid
 ```
 
 ## sign input
 Sign arbitrary data using private key. Signing allows someone to verify the signature using 
-public key
+public key. Signing generates `Keccak256` hash of the input data.
+
+Sign using `ed25519` key:
 ```bash
 dotkey sign this arbitrary input
-Enter prv key: 2WKuYzXcJk53A1ymJ2mH182TuqBfSnMShyoA4ma1b9cUxXi5fo1bm3Va4eTxRuafmpYwH2kNM1ioHdG8fYy1zSH2
+Enter prv key: WePVryNYi198dbiRSpLmMN2NALW23V7Mm2XMXWjcVZCn5qz9f4RJfSJFxmWyybM7ZQDJL1xTsNodZVMBETSNCy9
 hash:  9PW5sgZmMnaBYgJxUQASyDQoeKoxPcgBLvCJEHVEFqb5
-sign:  4yAcM3NoXp4va75L8dYrbwE1XhXXo3GCXiP5KwF5HuoRrTzFYbfFeNrtdzFuYtix3vcGEH8engirSXPL66BCRnKj
+sign:  25Kou6uePUPTvvAWw7jYGYjKQTwZQWVZd3LEqsqL3NtCwmj554nYtXYcay3QnW96gmQLLHuGUoXScL8Zy9hJU8pP
+```
+
+Or using `sr25519` key. It infers the type of key used based on key length.
+```bash
+dotkey sign this arbitrary input
+Enter prv key: 8bJUC1kRPrMdsjYhnZbd5sSDfxhYgYDJFpUnNwKNndQr
+hash:  9PW5sgZmMnaBYgJxUQASyDQoeKoxPcgBLvCJEHVEFqb5
+sign:  4LF5Tamx6zqUJNPh6yCp9FsFCWd1KBXa824tqriQAg9gCkqZgxMh4UeEvp3pzfMFiLKMgRYYPLVkNZgGSV9MRw7N
 ```
 
 ## verify signature
+Similarly, depending on whether `sr25519` or `ed25519` key was used, the corresponding public key
+can be used to verify signature:
+
 ```bash
 dotkey verify 
-Enter pub key: AYFf2pT5o1FqzwQmPM6pfW7sPdK4oVxwD7cHrt3X4jY8
+Enter pub key: 5DTatDjH59QYHLBgzvXFxkvbV1JskwmzXydiC8hQd2qmAiei
 Enter hash: 9PW5sgZmMnaBYgJxUQASyDQoeKoxPcgBLvCJEHVEFqb5
-Enter sign: 4yAcM3NoXp4va75L8dYrbwE1XhXXo3GCXiP5KwF5HuoRrTzFYbfFeNrtdzFuYtix3vcGEH8engirSXPL66BCRnKj
+Enter sign: 25Kou6uePUPTvvAWw7jYGYjKQTwZQWVZd3LEqsqL3NtCwmj554nYtXYcay3QnW96gmQLLHuGUoXScL8Zy9hJU8pP
+signature is valid for given hash and public key
+```
+
+```bash
+dotkey verify 
+Enter pub key: 5Dkq59KEs7FZB6rJs4ANd6q3gBitt2o3zYEBGtdnApWWFyUq
+Enter hash: 9PW5sgZmMnaBYgJxUQASyDQoeKoxPcgBLvCJEHVEFqb5
+Enter sign: 4LF5Tamx6zqUJNPh6yCp9FsFCWd1KBXa824tqriQAg9gCkqZgxMh4UeEvp3pzfMFiLKMgRYYPLVkNZgGSV9MRw7N
 signature is valid for given hash and public key
 ```
 
 ## generate hash
-Hash can be generated for an input
+`Keccak256` hash can be generated for the input
 ```bash
 dotkey hash this arbitrary input
 hash:  9PW5sgZmMnaBYgJxUQASyDQoeKoxPcgBLvCJEHVEFqb5

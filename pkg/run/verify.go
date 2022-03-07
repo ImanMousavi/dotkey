@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ChainSafe/gossamer/lib/crypto"
+	"github.com/ChainSafe/gossamer/lib/crypto/ed25519"
 	"github.com/ChainSafe/gossamer/lib/crypto/sr25519"
 	"github.com/kubetrail/dotkey/pkg/flags"
 	"github.com/mr-tron/base58"
@@ -92,9 +94,32 @@ func Verify(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to decode signature: %w", err)
 	}
 
-	pubKey := &sr25519.PublicKey{}
-	if err := pubKey.Decode(b[1:33]); err != nil {
-		return fmt.Errorf("failed to decode public key: %w", err)
+	var pubKey crypto.PublicKey
+
+	decodeErr := fmt.Errorf("")
+
+	if decodeErr != nil {
+		key := &sr25519.PublicKey{}
+		if err := key.Decode(b[1:33]); err != nil {
+			decodeErr = fmt.Errorf("failed to decode as sr25519 public key: %w", err)
+		} else {
+			decodeErr = nil
+			pubKey = key
+		}
+	}
+
+	if decodeErr != nil {
+		key := &ed25519.PublicKey{}
+		if err := key.Decode(b[1:33]); err != nil {
+			decodeErr = fmt.Errorf("failed to decode as ed25519 public key: %w", err)
+		} else {
+			decodeErr = nil
+			pubKey = key
+		}
+	}
+
+	if decodeErr != nil {
+		return decodeErr
 	}
 
 	if ok, err := pubKey.Verify(hashBytes, signBytes); err != nil || !ok {
