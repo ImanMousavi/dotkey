@@ -108,12 +108,16 @@ func Gen(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		seedArray, err := schnorrkel.SeedFromMnemonic(mnemonic, string(passphrase))
-		if err != nil {
-			return err
-		}
+		if !skipMnemonicValidation {
+			seedArray, err := schnorrkel.SeedFromMnemonic(mnemonic, string(passphrase))
+			if err != nil {
+				return fmt.Errorf("failed to generate seed from mnemonic: %w", err)
+			}
 
-		seed = seedArray[:]
+			seed = seedArray[:]
+		} else {
+			seed = bip39.NewSeed(mnemonic, string(passphrase))
+		}
 	} else {
 		if prompt {
 			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Enter seed in hex: "); err != nil {
@@ -133,15 +137,24 @@ func Gen(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("invalid seed: %w", err)
 		}
 	}
+
 	var pair crypto.Keypair
 
 	switch strings.ToLower(scheme) {
 	case "ed25519":
-		pair, err = ed25519.NewKeypairFromSeed(seed[:32])
+		if len(seed) < ed25519.SeedLength {
+			return fmt.Errorf("invalid seed length %d, need %d", len(seed), ed25519.SeedLength)
+		}
+		seed = seed[:32]
+		pair, err = ed25519.NewKeypairFromSeed(seed)
 		if err != nil {
 			return fmt.Errorf("failed to generate ed25519 keypair: %w", err)
 		}
 	case "sr25519":
+		if len(seed) < sr25519.SeedLength {
+			return fmt.Errorf("invalid seed length %d, need %d", len(seed), sr25519.SeedLength)
+		}
+		seed = seed[:32]
 		pair, err = sr25519.NewKeypairFromSeed(seed)
 		if err != nil {
 			return fmt.Errorf("failed to generate sr25519 keypair: %w", err)

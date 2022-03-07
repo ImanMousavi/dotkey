@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ChainSafe/gossamer/lib/crypto/ed25519"
+
 	"github.com/ChainSafe/gossamer/lib/crypto/sr25519"
 	"github.com/mr-tron/base58"
 	"github.com/spf13/cobra"
@@ -44,7 +46,17 @@ func Validate(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to decode private key")
 		}
 		if prompt {
-			if _, err := fmt.Fprintln(cmd.OutOrStdout(), "private key is valid"); err != nil {
+			if _, err := fmt.Fprintln(cmd.OutOrStdout(), "sr25519 private key is valid"); err != nil {
+				return fmt.Errorf("failed to write to output: %w", err)
+			}
+		}
+	case 64:
+		prv := &ed25519.PrivateKey{}
+		if err := prv.Decode(b); err != nil {
+			return fmt.Errorf("failed to decode private key")
+		}
+		if prompt {
+			if _, err := fmt.Fprintln(cmd.OutOrStdout(), "ed25519 private key is valid"); err != nil {
 				return fmt.Errorf("failed to write to output: %w", err)
 			}
 		}
@@ -83,20 +95,31 @@ func Validate(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("invalid public key, checksum mismatch")
 		}
 
-		pubKey := &sr25519.PublicKey{}
-		if err := pubKey.Decode(b); err != nil {
-			return fmt.Errorf("failed to decode public key: %w", err)
+		if err := (&sr25519.PublicKey{}).Decode(b[1:33]); err == nil {
+			if prompt {
+				if _, err := fmt.Fprintln(cmd.OutOrStdout(),
+					fmt.Sprintf("sr25519 public key for network %s is valid", network),
+				); err != nil {
+					return fmt.Errorf("failed to write to output: %w", err)
+				}
+			}
+			return nil
 		}
 
-		if prompt {
-			if _, err := fmt.Fprintln(cmd.OutOrStdout(),
-				fmt.Sprintf("public key for network %s is valid", network),
-			); err != nil {
-				return fmt.Errorf("failed to write to output: %w", err)
+		if err := (&ed25519.PublicKey{}).Decode(b[1:33]); err == nil {
+			if prompt {
+				if _, err := fmt.Fprintln(cmd.OutOrStdout(),
+					fmt.Sprintf("ed25519 public key for network %s is valid", network),
+				); err != nil {
+					return fmt.Errorf("failed to write to output: %w", err)
+				}
 			}
+			return nil
 		}
+
+		return fmt.Errorf("invalid public key")
 	default:
-		return fmt.Errorf("invalid key length of %d bytes, expected 32 or 35", len(b))
+		return fmt.Errorf("invalid key length of %d bytes, expected 32, 64 (for prv key) or 35 (for pub key)", len(b))
 	}
 
 	return nil
