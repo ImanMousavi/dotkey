@@ -28,20 +28,10 @@ var genCmd = &cobra.Command{
 	Long: `This command generates private/public keys
 from mnemonic and optional secret passphrase per BIP-32 spec.
 
-The keys are generated based on a chain derivation path
-Path     |   Remark
----------|--------------------------------------------------------------
-m        |   Master key (aka root key)
-m/0      |   First child of master key
-m/0'     |   First hardened child of master key
-m/0/0    |   First child of first child of master key
-m/0'/0   |   First child of first hardened child of master key
-m/0/0'   |   First hardened child of first child of master key
-m/0'/0'  |   First hardened child of first hardened child of master key'
-
 Network values are available via command:
-  dotkey network-list
+  dotkey list-networks
 
+Derived keys are not yet supported.
 `,
 	RunE: run.Gen,
 }
@@ -54,6 +44,6 @@ func init() {
 	f.Bool(flags.UsePassphrase, false, "Prompt for secret passphrase")
 	f.Bool(flags.InputHexSeed, false, "Treat input as hex seed instead of mnemonic")
 	f.Bool(flags.SkipMnemonicValidation, false, "Skip mnemonic validation")
-	f.String(flags.Network, "substrate", "Network name")
+	f.String(flags.Network, "substrate", "Network name (or hex value such as 2a, without 0x prefix)")
 	f.String(flags.Scheme, "sr25519", "Cryptographic scheme: ed25519, sr25519")
 }

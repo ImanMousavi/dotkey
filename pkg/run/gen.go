@@ -170,9 +170,12 @@ func Gen(cmd *cobra.Command, args []string) error {
 	// encode network and checksum
 	encode := pair.Public().Encode()
 
-	network, ok := networks[strings.ToLower(network)]
-	if !ok {
-		return fmt.Errorf("invalid network %s, pl. try substrate", network)
+	if nw, ok := networks[strings.ToLower(network)]; !ok {
+		if _, err := hex.DecodeString(network); err != nil {
+			return fmt.Errorf("invalid network %s, pl. try substrate", network)
+		}
+	} else {
+		network = nw
 	}
 
 	netByte, err := hex.DecodeString(network)

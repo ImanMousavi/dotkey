@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/ChainSafe/gossamer/lib/crypto/ed25519"
-
 	"github.com/ChainSafe/gossamer/lib/crypto/sr25519"
 	"github.com/mr-tron/base58"
 	"github.com/spf13/cobra"

@@ -22,7 +22,7 @@ import (
 
 // networkListCmd represents the networkList command
 var networkListCmd = &cobra.Command{
-	Use:   "networkList",
+	Use:   "list-networks",
 	Short: "List networks",
 	Long: `This command lists available networks and
 their prefix byte value in hex. The network value is
