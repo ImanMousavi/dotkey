@@ -47,13 +47,13 @@ func Sign(cmd *cobra.Command, args []string) error {
 
 	var prvKey crypto.PrivateKey
 	switch len(b) {
-	case 32:
+	case sr25519.PrivateKeyLength:
 		key := &sr25519.PrivateKey{}
 		if err := key.Decode(b); err != nil {
 			return fmt.Errorf("failed to decode private key")
 		}
 		prvKey = key
-	case 64:
+	case ed25519.PrivateKeyLength:
 		key := &ed25519.PrivateKey{}
 		if err := key.Decode(b); err != nil {
 			return fmt.Errorf("failed to decode private key")
@@ -84,6 +84,17 @@ func Sign(cmd *cobra.Command, args []string) error {
 	sign, err := prvKey.Sign(hash)
 	if err != nil {
 		return fmt.Errorf("failed to sign data: %w", err)
+	}
+
+	switch prvKey.(type) {
+	case *sr25519.PrivateKey:
+		if len(sign) != sr25519.SeedLength {
+			return fmt.Errorf("invalid signature length, expected %d", sr25519.SeedLength)
+		}
+	case *ed25519.PrivateKey:
+		if len(sign) != ed25519.SeedLength {
+			return fmt.Errorf("invalid signature length, expected %d", sr25519.SeedLength)
+		}
 	}
 
 	hashB58 := base58.Encode(hash)

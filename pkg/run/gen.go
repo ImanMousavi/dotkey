@@ -145,7 +145,7 @@ func Gen(cmd *cobra.Command, args []string) error {
 		if len(seed) < ed25519.SeedLength {
 			return fmt.Errorf("invalid seed length %d, need %d", len(seed), ed25519.SeedLength)
 		}
-		seed = seed[:32]
+		seed = seed[:ed25519.SeedLength]
 		pair, err = ed25519.NewKeypairFromSeed(seed)
 		if err != nil {
 			return fmt.Errorf("failed to generate ed25519 keypair: %w", err)
@@ -154,7 +154,7 @@ func Gen(cmd *cobra.Command, args []string) error {
 		if len(seed) < sr25519.SeedLength {
 			return fmt.Errorf("invalid seed length %d, need %d", len(seed), sr25519.SeedLength)
 		}
-		seed = seed[:32]
+		seed = seed[:sr25519.SeedLength]
 		pair, err = sr25519.NewKeypairFromSeed(seed)
 		if err != nil {
 			return fmt.Errorf("failed to generate sr25519 keypair: %w", err)
